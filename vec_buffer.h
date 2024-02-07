@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <cstring>
@@ -18,6 +20,10 @@ public:
         buf_.clear();
         tail_ = 0;
         cur_size_ = 0;
+    }
+
+    uint16_t bufferSize() {
+        return cur_size_;
     }
 
     void normalizeTail() {
@@ -82,29 +88,28 @@ public:
         return buf_[frame];
     }
 
-    const std::vector<Type> getFrameRange(int start_pos, int end_pos) {
+    const Type* getFrameRange(int start_pos, int end_pos) {
         if(!isCorrectFrame(start_pos) || !isCorrectFrame(end_pos) || start_pos > end_pos) {
-            throw std::overflow_error("Range is out of borders or equal to each other(use <getFrame> function");
+            throw std::overflow_error("Range is out of borders or equal to each other(use <getFrame> function to get single frame");
         }
-         std::vector<Type> frame_vec{};
-         auto  it1 {buf_.begin() + start_pos};
-         auto  it2 {buf_.begin() + end_pos + 1};
+
+         auto size_range{end_pos - start_pos + 1};
+         Type *new_array = new Type[size_range];
 
          if(cur_size_ < buf_.size()) {
-            std::copy(it1, it2 ,std::back_inserter(frame_vec));
-         }
-         if((tail_ + end_pos) >= cur_size_) {
-             it1 = buf_.begin() + tail_ + start_pos;
-             std::copy(it1, buf_.end(), std::back_inserter(frame_vec));
-             end_pos -= cur_size_ - tail_;
-             it2 = buf_.begin() + end_pos + 1;
-             std::copy(buf_.begin(), it2, std::back_inserter(frame_vec));
+                std::memcpy(&new_array[0], &buf_[0], size_range * sizeof(Type));
          } else {
-                 it1 = buf_.begin() + tail_ + start_pos;
-                 it2 = buf_.begin() + tail_ + end_pos + 1;
-                 std::copy(it1, it2 ,std::back_inserter(frame_vec));
-                }
-        return frame_vec;
+             if((tail_ + start_pos) + size_range <= buf_.size()) {
+                std::memcpy(&new_array[0], &buf_[tail_ + start_pos],size_range * sizeof(Type));
+             } else {
+                auto part2 = (tail_ + start_pos + size_range) - buf_.size();
+                auto part1 = size_range - part2;
+                std::memcpy(&new_array[0], &buf_[tail_ + start_pos],part1 * sizeof(Type));
+                std::memcpy(&new_array[part1], &buf_[0],part2 * sizeof(Type));
+             }
+         }
+
+        return new_array;
     }
 
 private:
