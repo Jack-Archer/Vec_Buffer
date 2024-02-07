@@ -24,8 +24,8 @@ int main() {
 
 
 
-   for(int i = 0; i <= 4; ++i) {
-    std::cout << range[i] << " ";
+   for(const auto el : range) {
+    std::cout << el << " ";
    }
    std::cout << std::endl;
 
